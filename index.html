@@ -9,12 +9,12 @@
 </head>
 <body>
     <header class="top-bar">
-        <h1>🌐 ASEAN Edge-Command: Autonomous Rescue Swarm</h1>
+        <h1>🌐 ASEAN Edge-Command: Autonomous Swarm AI</h1>
         <div class="controls">
             <select id="region-select" onchange="changeRegion()">
-                <option value="manila">Typhoon Zone: Manila, Philippines</option>
-                <option value="jakarta">Earthquake Zone: Jakarta, Indonesia</option>
-                <option value="kl">Flood Zone: Kuala Lumpur, Malaysia</option>
+                <option value="manila">[OP-ALPHA] Typhoon Strike Zone - Manila, PH</option>
+                <option value="jakarta">[OP-BRAVO] 7.2 Magnitude Earthquake - Jakarta, ID</option>
+                <option value="kl">[OP-CHARLIE] Flash Flood Sector - Kuala Lumpur, MY</option>
             </select>
             <button id="start-btn" onclick="startMission()">INITIALIZE MISSION</button>
         </div>
@@ -26,6 +26,12 @@
             <div id="battery-levels">
                 <p class="status-text">Awaiting network discovery...</p>
             </div>
+            
+            <h2 style="margin-top: 20px;">Mission Stats</h2>
+            <div class="stats-box">
+                <div class="stat"><span>Survivors Detected:</span> <span id="stat-found">0</span></div>
+                <div class="stat"><span>Aid Packages Delivered:</span> <span id="stat-aid">0</span></div>
+            </div>
         </aside>
 
         <section class="map-section">
@@ -33,9 +39,9 @@
         </section>
 
         <aside class="side-panel">
-            <h2>Agentic Reasoning (Chain-of-Thought)</h2>
+            <h2>Agentic Reasoning (CoT)</h2>
             <div id="log-container">
-                <div class="log action">System Offline. Select a region and initialize.</div>
+                <div class="log action">System Offline. Select a disaster zone and initialize.</div>
             </div>
         </aside>
     </main>
