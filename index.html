@@ -3,37 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disaster Response Command Center</title>
+    <title>ASEAN Edge-Command</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>🚁 Swarm Command Center</h1>
-        <button id="start-btn" onclick="startMission()">Start Mission</button>
+    <header class="top-bar">
+        <h1>🌐 ASEAN Edge-Command: Autonomous Rescue Swarm</h1>
+        <div class="controls">
+            <select id="region-select" onchange="changeRegion()">
+                <option value="manila">Typhoon Zone: Manila, Philippines</option>
+                <option value="jakarta">Earthquake Zone: Jakarta, Indonesia</option>
+                <option value="kl">Flood Zone: Kuala Lumpur, Malaysia</option>
+            </select>
+            <button id="start-btn" onclick="startMission()">INITIALIZE MISSION</button>
+        </div>
     </header>
 
     <main class="dashboard">
-        <section class="map-container">
-            <div id="map">
-                </div>
+        <aside class="side-panel">
+            <h2>Swarm Telemetry</h2>
+            <div id="battery-levels">
+                <p class="status-text">Awaiting network discovery...</p>
+            </div>
+        </aside>
+
+        <section class="map-section">
+            <div id="map"></div>
         </section>
 
-        <aside class="sidebar">
-            <div class="panel telemetry">
-                <h2>Drone Telemetry</h2>
-                <div id="battery-levels">
-                    </div>
-            </div>
-
-            <div class="panel logs">
-                <h2>Agent Reasoning</h2>
-                <div id="log-container">
-                    <p class="system-log">System initialized. Awaiting mission start...</p>
-                </div>
+        <aside class="side-panel">
+            <h2>Agentic Reasoning (Chain-of-Thought)</h2>
+            <div id="log-container">
+                <div class="log action">System Offline. Select a region and initialize.</div>
             </div>
         </aside>
     </main>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

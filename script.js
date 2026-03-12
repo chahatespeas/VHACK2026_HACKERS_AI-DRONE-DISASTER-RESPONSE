@@ -1,155 +1,152 @@
-// Configuration
-const API_URL = "http://localhost:5000/api/status"; // Change to your backend URL
-const USE_MOCK_DATA = true; // Set to false when connecting to real backend
+// --- ASEAN Region Data (Real GPS Coordinates) ---
+const regions = {
+    manila: { lat: 14.5995, lng: 120.9842, name: "Manila, Philippines" },
+    jakarta: { lat: -6.2088, lng: 106.8456, name: "Jakarta, Indonesia" },
+    kl: { lat: 3.1390, lng: 101.6869, name: "Kuala Lumpur, Malaysia" }
+};
 
+let currentRegion = regions.manila; // Default
 let missionActive = false;
-let pollingInterval;
+let simulationInterval;
 
-// DOM Elements
-const mapEl = document.getElementById('map');
+// --- Initialize Interactive Map ---
+const map = L.map('map').setView([currentRegion.lat, currentRegion.lng], 13);
+// Adding a super cool Dark Mode map layer!
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+}).addTo(map);
+
+// --- Define Custom Glowing Icons ---
+const baseIcon = L.divIcon({ className: 'custom-base', iconSize: [40, 40], html: 'BASE' });
+const droneIcon = L.divIcon({ className: 'custom-drone', iconSize: [14, 14] });
+const survivorIcon = L.divIcon({ className: 'custom-survivor', iconSize: [18, 18] });
+
+// --- Map Entities ---
+let baseMarker;
+let droneMarkers = {};
+let survivorMarkers = [];
+
+let drones = [
+    { id: 'Alpha', lat: 0, lng: 0, battery: 100, state: 'idle' },
+    { id: 'Bravo', lat: 0, lng: 0, battery: 85, state: 'idle' },
+    { id: 'Charlie', lat: 0, lng: 0, battery: 90, state: 'idle' }
+];
+
+let survivors = [];
+
+// UI Elements
+const startBtn = document.getElementById('start-btn');
+const regionSelect = document.getElementById('region-select');
 const batteryContainer = document.getElementById('battery-levels');
 const logContainer = document.getElementById('log-container');
-const startBtn = document.getElementById('start-btn');
 
-// Start Mission
+// Change Country Dropdown
+function changeRegion() {
+    if(missionActive) {
+        alert("Cannot change region while mission is active!");
+        regionSelect.value = Object.keys(regions).find(key => regions[key].name === currentRegion.name);
+        return;
+    }
+    const selected = regionSelect.value;
+    currentRegion = regions[selected];
+    map.flyTo([currentRegion.lat, currentRegion.lng], 13); // Smooth fly animation
+    logAction(`Satellite recalibrated to ${currentRegion.name}. Waiting for initialization.`);
+}
+
 function startMission() {
     missionActive = true;
     startBtn.disabled = true;
-    startBtn.innerText = "Mission In Progress...";
+    startBtn.innerText = "MISSION ACTIVE";
+    regionSelect.disabled = true; // Lock the dropdown
     
-    log("Mission initiated. Dispatching swarm...", "success");
-    
-    // In a real app, send a POST request to your backend here
-    // fetch('http://localhost:5000/api/start', { method: 'POST' });
+    // Set Base Station
+    baseMarker = L.marker([currentRegion.lat, currentRegion.lng], {icon: baseIcon}).addTo(map);
 
-    pollingInterval = setInterval(fetchUpdates, 1000); // Fetch updates every second
-}
+    // Prepare Survivors
+    survivors = [
+        { id: 1, lat: currentRegion.lat + 0.02, lng: currentRegion.lng + 0.02, discovered: false },
+        { id: 2, lat: currentRegion.lat - 0.03, lng: currentRegion.lng - 0.01, discovered: false }
+    ];
 
-// Fetch loop
-async function fetchUpdates() {
-    let data;
-    if (USE_MOCK_DATA) {
-        data = generateMockData();
-    } else {
-        try {
-            const response = await fetch(API_URL);
-            data = await response.json();
-        } catch (error) {
-            console.error("API Error:", error);
-            log("Connection to backend lost.", "alert");
-            return;
-        }
-    }
-    
-    updateMap(data.drones, data.survivors);
-    updateTelemetry(data.drones);
-    if(data.latestLog) log(data.latestLog.msg, data.latestLog.type);
-}
-
-// Map Rendering
-function updateMap(drones, survivors) {
-    // Render Survivors (assuming static for now)
-    survivors.forEach(surv => {
-        let el = document.getElementById(`surv-${surv.id}`);
-        if (!el) {
-            el = document.createElement('div');
-            el.id = `surv-${surv.id}`;
-            el.className = 'entity survivor';
-            mapEl.appendChild(el);
-        }
-        el.style.left = `${surv.x}%`;
-        el.style.top = `${surv.y}%`;
-    });
-
-    // Render Drones
+    // Place Drones at Base
     drones.forEach(drone => {
-        let el = document.getElementById(`drone-${drone.id}`);
-        if (!el) {
-            el = document.createElement('div');
-            el.id = `drone-${drone.id}`;
-            el.className = 'entity drone';
-            mapEl.appendChild(el);
-        }
-        // CSS transitions will automatically animate this movement
-        el.style.left = `${drone.x}%`;
-        el.style.top = `${drone.y}%`;
+        drone.lat = currentRegion.lat;
+        drone.lng = currentRegion.lng;
+        droneMarkers[drone.id] = L.marker([drone.lat, drone.lng], {icon: droneIcon}).addTo(map);
     });
+
+    logAction("Executing MCP Tool: discover_active_drones()");
+    setTimeout(() => {
+        logThought(`I found 3 drones available on the edge network in ${currentRegion.name}. Deploying swarm.`);
+        simulationInterval = setInterval(runSimulationTick, 1000); 
+    }, 1000);
 }
 
-// Telemetry Rendering
-function updateTelemetry(drones) {
+function runSimulationTick() {
+    drones.forEach(drone => {
+        drone.battery -= Math.random() * 2; 
+
+        // AI Battery Management Logic
+        if (drone.battery <= 20 && drone.state !== 'returning') {
+            drone.state = 'returning';
+            logThought(`Drone ${drone.id} battery is critical (${Math.floor(drone.battery)}%). Recalling to base.`);
+            logAction(`execute: move_to(lat:${currentRegion.lat.toFixed(3)}, lng:${currentRegion.lng.toFixed(3)}) for Drone ${drone.id}`);
+        }
+
+        // AI Drone Movement Logic
+        if (drone.state === 'returning') {
+            // Fly back to base
+            drone.lat += (currentRegion.lat - drone.lat) * 0.1;
+            drone.lng += (currentRegion.lng - drone.lng) * 0.1;
+            // Recharge if close enough
+            if (Math.abs(drone.lat - currentRegion.lat) < 0.001) drone.battery = 100; 
+        } else {
+            drone.state = 'searching';
+            // Random search pattern over the real city blocks
+            drone.lat += (Math.random() - 0.5) * 0.005;
+            drone.lng += (Math.random() - 0.5) * 0.005;
+        }
+
+        // Update visual marker on the map
+        droneMarkers[drone.id].setLatLng([drone.lat, drone.lng]);
+    });
+
+    // Check if survivors are found
+    survivors.forEach(surv => {
+        if (!surv.discovered && Math.random() > 0.95) {
+            surv.discovered = true;
+            logAlert(`THERMAL SIGNATURE DETECTED at GPS [${surv.lat.toFixed(4)}, ${surv.lng.toFixed(4)}]`);
+            L.marker([surv.lat, surv.lng], {icon: survivorIcon}).addTo(map);
+        }
+    });
+
+    updateTelemetry();
+}
+
+function updateTelemetry() {
     batteryContainer.innerHTML = '';
     drones.forEach(drone => {
-        const color = drone.battery > 50 ? 'var(--success)' : (drone.battery > 20 ? '#fbbf24' : 'var(--alert)');
+        let bat = Math.floor(drone.battery);
+        let color = bat > 50 ? 'var(--safe)' : (bat > 20 ? '#fbbf24' : 'var(--danger)');
         
-        const html = `
+        batteryContainer.innerHTML += `
             <div class="battery-item">
-                <div class="battery-label">
-                    <span>Drone ${drone.id}</span>
-                    <span>${drone.battery}%</span>
-                </div>
+                <div class="battery-label"><span>Drone ${drone.id}</span><span>${bat}%</span></div>
                 <div class="battery-bar-bg">
-                    <div class="battery-bar-fill" style="width: ${drone.battery}%; background-color: ${color}"></div>
+                    <div class="battery-bar-fill" style="width: ${bat}%; background: ${color}"></div>
                 </div>
-            </div>
-        `;
-        batteryContainer.innerHTML += html;
+            </div>`;
     });
 }
 
-// Agent Reasoning Logs
-function log(message, type = "normal") {
+function logThought(msg) { addLog(`🧠 Thinking: ${msg}`, 'thought'); }
+function logAction(msg) { addLog(`⚡ Action: ${msg}`, 'action'); }
+function logAlert(msg) { addLog(`🚨 ${msg}`, 'alert'); }
+
+function addLog(message, type) {
     const el = document.createElement('div');
-    el.className = `log-entry ${type}`;
-    
-    const timestamp = new Date().toLocaleTimeString();
-    el.innerHTML = `[${timestamp}] ${message}`;
-    
+    el.className = `log ${type}`;
+    el.innerText = `[${new Date().toLocaleTimeString()}] ${message}`;
     logContainer.appendChild(el);
-    logContainer.scrollTop = logContainer.scrollHeight; // Auto-scroll
-}
-
-// ==========================================
-// MOCK DATA GENERATOR (For Hackathon Demo)
-// ==========================================
-let mockDrones = [
-    { id: 1, x: 10, y: 10, battery: 100 },
-    { id: 2, x: 90, y: 10, battery: 100 },
-    { id: 3, x: 50, y: 90, battery: 100 }
-];
-const mockSurvivors = [
-    { id: 'A', x: 45, y: 45 },
-    { id: 'B', x: 75, y: 80 }
-];
-
-function generateMockData() {
-    // Move drones randomly towards center
-    mockDrones.forEach(d => {
-        d.x += (Math.random() - 0.3) * 5;
-        d.y += (Math.random() - 0.3) * 5;
-        d.battery -= Math.floor(Math.random() * 2);
-        
-        // Boundaries
-        d.x = Math.max(0, Math.min(100, d.x));
-        d.y = Math.max(0, Math.min(100, d.y));
-    });
-
-    // Random logs
-    const logMessages = [
-        "Drone 1: Scanning sector Alpha...",
-        "Drone 2: Thermal anomaly detected.",
-        "Agent: Rerouting Drone 3 to investigate anomaly.",
-        "System: Optimal path calculated.",
-        "Drone 1: Sector clear."
-    ];
-    
-    let latestLog = null;
-    if (Math.random() > 0.6) {
-        latestLog = { 
-            msg: logMessages[Math.floor(Math.random() * logMessages.length)],
-            type: Math.random() > 0.8 ? "alert" : "normal"
-        };
-    }
-
-    return { drones: mockDrones, survivors: mockSurvivors, latestLog };
+    logContainer.scrollTop = logContainer.scrollHeight;
 }
