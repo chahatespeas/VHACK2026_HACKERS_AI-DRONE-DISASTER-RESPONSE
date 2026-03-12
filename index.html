@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disaster Response Command Center</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>🚁 Swarm Command Center</h1>
+        <button id="start-btn" onclick="startMission()">Start Mission</button>
+    </header>
+
+    <main class="dashboard">
+        <section class="map-container">
+            <div id="map">
+                </div>
+        </section>
+
+        <aside class="sidebar">
+            <div class="panel telemetry">
+                <h2>Drone Telemetry</h2>
+                <div id="battery-levels">
+                    </div>
+            </div>
+
+            <div class="panel logs">
+                <h2>Agent Reasoning</h2>
+                <div id="log-container">
+                    <p class="system-log">System initialized. Awaiting mission start...</p>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
