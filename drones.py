@@ -17,6 +17,14 @@ class Drone:
 
     def get_position(self):
         return (self.x, self.y)
+    
+    def get_x_pos(self):
+        return self.x
+    
+    def get_y_pos(self):
+        return self.y
 
     def get_battery(self):
         return self.battery
+    
+    
