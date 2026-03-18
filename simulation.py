@@ -1,11 +1,12 @@
 import random
 import os 
-from drones import Drone
+from drone import Drone
 from region import Region
+import sqlite3
 
 GRID_SIZE = 10
 
-drone_dir_name = "drone_data"
+drone_dir_name = "drone_data" 
 region_dir_name = "region_data"
 
 temp_current_time = "0400"
@@ -20,19 +21,18 @@ temp_current_time = "0400"
 # TODO: connect to agent
 # TODO: add exceptions
 # TODO: make into csv file instead of txt file for easier parsing and visualization
+# TODO: make the lists into dicts
 # TODO: RENAME THIS FILE
 
 class Simulation:
     #grid creation for 10x10 disaster map
     def __init__(self):
         self.grid = [["empty" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
-        self.drones = []
+        self.drones = {}
+        self.regions = {}
         self.survivors = []
-        self.region = []
-        # FIXME: do i need these to store the drones? maybe i can just read from file. list will grow overtime?
 
     def add_region(self, name, id, description, coordinates):
-        global region; 
         region = Region(name, id, description, coordinates)
         try:
             os.mkdir(region_dir_name)
@@ -45,21 +45,23 @@ class Simulation:
             print(f"An error occurred while creating directory '{region_dir_name}': {e}")
         
         try:
-            with open(f"{region_dir_name}/{region}", "x") as f:
+            with open(f"{region_dir_name}/{region.id}", "x") as f:
                 f.write(f"drone_id,status,temp_current_time,current_battery,current_x_pos,current_y_pos,\n")
-                # only append drone if file creation is successful, otherwise we will have duplicate entries for the same drone
-                self.drones.append(region)
+                #self.regions[region.id] = region
         except FileExistsError:
             print(f"Region '{region.id}' already exists.")
         except Exception as e:
             print(f"An error occurred while writing to file '{region_dir_name}/{region.id}': {e}")
-        self.region.append(region)
-    
+        
+        self.regions[region.id] = region
     #drones added to simulation class
-    def add_drone(self, drone_id, x, y, Region):
-        drone = Drone(drone_id, x, y, Region)
-        # substitute for storing drone data
-        # add directory for drone files (i.e. drone_data)
+    def add_drone(self, drone_id, x, y, region_id: str):
+        match_region = self.regions.get(region_id)
+        if match_region is None:
+            print(f"Region '{region_id}' not found. Drone '{drone_id}' not added.")
+            return
+        drone = Drone(drone_id, x, y, match_region)
+
         try:
             os.mkdir(drone_dir_name)
             print(f"Directory '{drone_dir_name}' created.")
@@ -72,9 +74,9 @@ class Simulation:
         
         try:
             with open(f"{drone_dir_name}/{drone_id}", "x") as f:
-                f.write(f"drone_id,status,temp_current_time,current_battery,current_x_pos,current_y_pos,\n{drone_id},{drone.get_state()}{temp_current_time},{drone.get_battery()},{drone.get_x_pos()},{drone.get_y_pos()}\n")
+                f.write(f"drone_id,active,temp_current_time,current_battery,current_x_pos,current_y_pos,\n{drone_id},{drone.get_state()},{temp_current_time},{drone.get_battery()},{drone.get_x_pos()},{drone.get_y_pos()}\n")
                 # only append drone if file creation is successful, otherwise we will have duplicate entries for the same drone
-                self.drones.append(drone)
+                self.drones[drone_id] = drone
         except FileExistsError:
             print(f"Drone '{drone_id}' already exists.")
         except Exception as e:
@@ -93,28 +95,31 @@ class Simulation:
     #drone movement function added
     def move_drone(self, drone_id, x, y): # x and y (and z) simulate real life coordinates for drone movement determined by ai
 
-        for drone in self.drones:
-            if drone.id == drone_id:
-                drone.move(x,y)
-                self.log_drone_state(drone_id)
-                return True
-            
-        return False 
+        drone = self.drones.get(drone_id)
+        print(self.drones.get(drone_id))
+        if drone is None:
+            print(f"Drone '{drone_id}' not found. Cannot move.")
+            return False
+        
+        drone.move(x, y)
+        self.log_drone_state(drone_id)
+        return True
     
     #thermal scan to simulate finding survivors
     def thermal_scan(self, drone_id):
 
-        for drone in self.drones:
-            if drone.id == drone_id:
+        drone = self.drones.get(drone_id)
+        if drone is None:
+            print(f"Drone '{drone_id}' not found. Cannot perform thermal scan.")
+            return False
+        
+        pos = drone.get_position()
+        self.log_drone_state(drone_id)
 
-                pos = drone.get_position()
-                self.log_drone_state(drone_id)
-
-                if pos in self.survivors:
-                    print(f"Survivor found at {pos}")
-                    return True
-
-                return False    
+        if pos in self.survivors:
+            print(f"Survivor found at {pos}")
+            return True 
+        
 
     #function to check drone battery
     def get_battery_status(self, drone_id):
@@ -143,10 +148,9 @@ class Simulation:
         }
 
     def log_drone_state(self, drone_id):
-        for drone in self.drones:
+        for drone in self.drones.values():
             if drone.id == drone_id:
                 with open(f"{drone_dir_name}/{drone_id}", "a") as f:
-                    f.write(f"{drone_id},{temp_current_time},{drone.get_battery()},{drone.get_x_pos()},{drone.get_y_pos()}\n") 
-                with open(f"{region_dir_name}/{region.id}", "a") as f:
-                    f.write(f"{drone_id},{temp_current_time},{drone.get_battery()},{drone.get_x_pos()},{drone.get_y_pos()}\n") 
-                
+                    f.write(f"{drone_id},{drone.get_state()},{temp_current_time},{drone.get_battery()},{drone.get_x_pos()},{drone.get_y_pos()}\n") 
+                with open(f"{region_dir_name}/{drone.region.id}", "a") as f:
+                    f.write(f"{drone_id},{drone.get_state()},{temp_current_time},{drone.get_battery()},{drone.get_x_pos()},{drone.get_y_pos()}\n")

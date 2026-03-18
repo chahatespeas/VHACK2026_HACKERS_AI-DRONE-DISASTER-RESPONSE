@@ -36,3 +36,5 @@ when [get_drone_scan] is executed for drone, return string: "extracted informati
 when [get_drone_position] is executed for drone, return string: "drone is in a section"
 assume all drones battery is random (from 0 to 100%).
 if drone battery is less than 20%, assign 
+
+use the most optimal route for drones to scan the area by 
