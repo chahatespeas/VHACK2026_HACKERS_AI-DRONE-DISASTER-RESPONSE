@@ -1,3 +1,9 @@
+.ai_agent-chat { 
+    margin-top: 20px; display: flex; gap: 10px; 
+};
+#ai-chat-input {
+    background-color: #1e293b;}
+
 :root {
     --bg-dark: #0b0f19;
     --panel-bg: rgba(15, 23, 42, 0.9);

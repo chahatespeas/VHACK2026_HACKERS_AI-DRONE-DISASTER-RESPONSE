@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from simulation import Simulation
 from typing import Optional
 
+
 app = FastAPI(title="Drone Simulation API", version="1.0.0")
 sim = Simulation()  # one shared simulation instance
 
@@ -37,6 +38,9 @@ class PlaceSurvivorsRequest(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# ── ai chat ─────────────────────────────────────────────────────────────────
 
 
 # ── Regions ─────────────────────────────────────────────────────────────────

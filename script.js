@@ -1,3 +1,7 @@
+const API_BASE = "http://localhost:8001"
+
+
+
 // --- ASEAN Region Data ---
 const regions = {
     manila: { lat: 14.5995, lng: 120.9842, name: "Manila, Philippines (Typhoon Zone)" },
