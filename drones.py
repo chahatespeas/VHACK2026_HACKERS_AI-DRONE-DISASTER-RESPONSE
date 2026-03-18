@@ -1,10 +1,15 @@
+from region import Region
+
 class Drone:
-    def __init__(self, drone_id, x, y):
+    def __init__(self, drone_id, x, y, Region):
         self.id = drone_id
         self.x = x
         self.y = y
+        self.region = Region
         self.battery = 100
         self.active = True
+        if self.battery <= 0:
+            self.active = False
 
     def move(self, new_x, new_y):
         if self.battery <= 0:
@@ -26,5 +31,8 @@ class Drone:
 
     def get_battery(self):
         return self.battery
+    
+    def get_state(self):
+        return self.active
     
     
