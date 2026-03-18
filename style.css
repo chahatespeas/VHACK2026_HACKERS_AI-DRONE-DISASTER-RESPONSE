@@ -1,0 +1,60 @@
+:root {
+    --bg-dark: #0b0f19;
+    --panel-bg: rgba(15, 23, 42, 0.9);
+    --border: #1e293b;
+    --text: #e2e8f0;
+    --accent: #38bdf8;
+    --danger: #ef4444;
+    --safe: #10b981;
+    --aided: #3b82f6; /* Blue for successful aid delivery */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+body { background-color: var(--bg-dark); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Header & Controls */
+.top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--panel-bg); border-bottom: 1px solid var(--border); }
+h1 { font-size: 1.2rem; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+.controls { display: flex; gap: 15px; }
+select { background: #0f172a; color: var(--text); border: 1px solid var(--accent); padding: 10px; border-radius: 4px; outline: none; cursor: pointer; font-family: monospace; }
+button { background: var(--accent); color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; transition: 0.3s; }
+button:hover { background: #0ea5e9; }
+button:disabled { background: #475569; cursor: not-allowed; color: #94a3b8; }
+
+/* Layout */
+.dashboard { display: flex; flex: 1; padding: 15px; gap: 15px; height: calc(100vh - 60px); }
+.side-panel { width: 320px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+h2 { font-size: 0.9rem; color: #94a3b8; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+
+/* Mission Stats */
+.stats-box { display: flex; flex-direction: column; gap: 10px; background: #0f172a; padding: 10px; border-radius: 4px; border: 1px solid #334155; }
+.stat { display: flex; justify-content: space-between; font-size: 0.85rem; font-family: monospace; color: var(--accent); }
+
+/* The Map */
+.map-section { flex: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+#map { width: 100%; height: 100%; background: #000; }
+
+/* Custom Map Markers */
+.custom-base { background: rgba(56, 189, 248, 0.4); border: 2px solid var(--accent); border-radius: 4px; color: white; font-size: 0.6rem; font-weight: bold; display: flex; align-items: center; justify-content: center; text-shadow: 0 0 5px black;}
+.custom-drone { background: var(--safe); border-radius: 50%; box-shadow: 0 0 10px var(--safe); }
+.custom-drone::before { content: ''; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px; border: 1px solid var(--safe); border-radius: 50%; animation: ping 2s infinite; }
+
+/* Survivor States */
+.custom-survivor-sos { background: var(--danger); border-radius: 50%; box-shadow: 0 0 15px var(--danger); animation: pulse 1s infinite; }
+.custom-survivor-aided { background: var(--aided); border-radius: 50%; box-shadow: 0 0 10px var(--aided); }
+
+@keyframes ping { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+/* Battery & Logs */
+.battery-item { margin-bottom: 15px; }
+.battery-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; font-family: monospace;}
+.battery-bar-bg { width: 100%; background: var(--border); height: 8px; border-radius: 4px; overflow: hidden;}
+.battery-bar-fill { height: 100%; transition: width 0.5s, background 0.5s;}
+
+#log-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-family: monospace; font-size: 0.85rem; }
+.log { padding: 8px; border-radius: 4px; background: #0f172a; border-left: 3px solid transparent; }
+.log.thought { border-left-color: #a855f7; color: #d8b4fe; } 
+.log.action { border-left-color: var(--accent); color: var(--text); } 
+.log.alert { border-left-color: var(--danger); color: #fca5a5; } 
+.log.success { border-left-color: var(--aided); color: #93c5fd; }

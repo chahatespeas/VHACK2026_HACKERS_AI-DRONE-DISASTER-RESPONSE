@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASEAN Edge-Command</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="top-bar">
+        <h1>🌐 ASEAN Edge-Command: Autonomous Swarm AI</h1>
+        <div class="controls">
+            <select id="region-select" onchange="changeRegion()">
+                <option value="manila">[OP-ALPHA] Typhoon Strike Zone - Manila, PH</option>
+                <option value="jakarta">[OP-BRAVO] 7.2 Magnitude Earthquake - Jakarta, ID</option>
+                <option value="kl">[OP-CHARLIE] Flash Flood Sector - Kuala Lumpur, MY</option>
+            </select>
+            <button id="start-btn" onclick="startMission()">INITIALIZE MISSION</button>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <aside class="side-panel">
+            <h2>Swarm Telemetry</h2>
+            <div id="battery-levels">
+                <p class="status-text">Awaiting network discovery...</p>
+            </div>
+            
+            <h2 style="margin-top: 20px;">Mission Stats</h2>
+            <div class="stats-box">
+                <div class="stat"><span>Survivors Detected:</span> <span id="stat-found">0</span></div>
+                <div class="stat"><span>Aid Packages Delivered:</span> <span id="stat-aid">0</span></div>
+            </div>
+        </aside>
+
+        <section class="map-section">
+            <div id="map"></div>
+        </section>
+
+        <aside class="side-panel">
+            <h2>Agentic Reasoning (CoT)</h2>
+            <div id="log-container">
+                <div class="log action">System Offline. Select a disaster zone and initialize.</div>
+            </div>
+        </aside>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
