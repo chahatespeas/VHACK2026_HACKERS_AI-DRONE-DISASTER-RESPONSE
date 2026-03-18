@@ -1,156 +1,163 @@
 import random
-import os 
+import os
+import sqlite3
 from drone import Drone
 from region import Region
-import sqlite3
 
-GRID_SIZE = 10
-
-drone_dir_name = "drone_data" 
-region_dir_name = "region_data"
-
-temp_current_time = "0400"
-
-# main functions should be that it logs drone state after a certain amount of time and after every action
-
-# TODO: [x] write battery to file
-# TODO: adding regions (bc each drone/fleet belongs to a specific region)
-# TODO: add system clock
-# TODO: make it so it logs state after a couple minutes in system time
-# TODO: write time to file
-# TODO: connect to agent
-# TODO: add exceptions
-# TODO: make into csv file instead of txt file for easier parsing and visualization
-# TODO: make the lists into dicts
-# TODO: RENAME THIS FILE
+GRID_SIZE = 200
+DB_NAME = "simulation.db"
+temp_current_time = 400
 
 class Simulation:
-    #grid creation for 10x10 disaster map
     def __init__(self):
         self.grid = [["empty" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
         self.drones = {}
         self.regions = {}
         self.survivors = []
+        self.conn = sqlite3.connect(DB_NAME)
+        self._init_db()
+        self._load_regions()
+        self._load_drones()
+
+    def _init_db(self):
+        cursor = self.conn.cursor()
+        # create tables if they don't exist
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS regions (
+                id TEXT PRIMARY KEY,
+                name TEXT,
+                description TEXT,
+                coordinates TEXT
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS drones (
+                drone_id TEXT PRIMARY KEY,
+                region_id TEXT,
+                x INTEGER,
+                y INTEGER,
+                battery INTEGER,
+                state TEXT,
+                FOREIGN KEY (region_id) REFERENCES regions(id)
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS drone_logs (
+                drone_id TEXT,
+                region_id TEXT,
+                time TEXT,
+                battery INTEGER,
+                x INTEGER,
+                y INTEGER,
+                state TEXT
+            )
+        """)
+        self.conn.commit()
+
+    # load regions from db into dict on startup
+    def _load_regions(self):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT id, name, description, coordinates FROM regions")
+        for row in cursor.fetchall():
+            id, name, description, coordinates = row
+            self.regions[id] = Region(name, id, description, coordinates)
+        print(f"Loaded {len(self.regions)} regions from database.")
+
+    # load drones from db into dict on startup
+    # allows us to reach O(1) access time for drones instead of O(n) if we were to store in a list
+    def _load_drones(self):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT drone_id, region_id, x, y FROM drones")
+        for row in cursor.fetchall():
+            drone_id, region_id, x, y = row
+            match_region = self.regions.get(region_id)
+            if match_region:
+                self.drones[drone_id] = Drone(drone_id, x, y, match_region)
+        print(f"Loaded {len(self.drones)} drones from database.")
 
     def add_region(self, name, id, description, coordinates):
         region = Region(name, id, description, coordinates)
         try:
-            os.mkdir(region_dir_name)
-            print(f"Directory '{region_dir_name}' created.")
-        except FileExistsError:
-            print(f"Directory '{region_dir_name}' already exists.")
-        except PermissionError:
-            print(f"Permission denied: Unable to create directory '{region_dir_name}'.")
-        except Exception as e:
-            print(f"An error occurred while creating directory '{region_dir_name}': {e}")
-        
-        try:
-            with open(f"{region_dir_name}/{region.id}", "x") as f:
-                f.write(f"drone_id,status,temp_current_time,current_battery,current_x_pos,current_y_pos,\n")
-                #self.regions[region.id] = region
-        except FileExistsError:
-            print(f"Region '{region.id}' already exists.")
-        except Exception as e:
-            print(f"An error occurred while writing to file '{region_dir_name}/{region.id}': {e}")
-        
-        self.regions[region.id] = region
-    #drones added to simulation class
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "INSERT INTO regions (id, name, description, coordinates) VALUES (?, ?, ?, ?)",
+                (id, name, description, str(coordinates))
+            )
+            self.conn.commit()
+            self.regions[id] = region
+            print(f"Region '{id}' added.")
+        except sqlite3.IntegrityError:
+            print(f"Region '{id}' already exists.")
+
     def add_drone(self, drone_id, x, y, region_id: str):
         match_region = self.regions.get(region_id)
         if match_region is None:
             print(f"Region '{region_id}' not found. Drone '{drone_id}' not added.")
             return
         drone = Drone(drone_id, x, y, match_region)
-
         try:
-            os.mkdir(drone_dir_name)
-            print(f"Directory '{drone_dir_name}' created.")
-        except FileExistsError:
-            print(f"Directory '{drone_dir_name}' already exists.")
-        except PermissionError:
-            print(f"Permission denied: Unable to create directory '{drone_dir_name}'.")
-        except Exception as e:
-            print(f"An error occurred while creating directory '{drone_dir_name}': {e}")
-        
-        try:
-            with open(f"{drone_dir_name}/{drone_id}", "x") as f:
-                f.write(f"drone_id,active,temp_current_time,current_battery,current_x_pos,current_y_pos,\n{drone_id},{drone.get_state()},{temp_current_time},{drone.get_battery()},{drone.get_x_pos()},{drone.get_y_pos()}\n")
-                # only append drone if file creation is successful, otherwise we will have duplicate entries for the same drone
-                self.drones[drone_id] = drone
-        except FileExistsError:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "INSERT INTO drones (drone_id, region_id, x, y, battery, state) VALUES (?, ?, ?, ?, ?, ?)",
+                (drone_id, region_id, x, y, drone.get_battery(), drone.get_state())
+            )
+            self.conn.commit()
+            self.drones[drone_id] = drone
+            print(f"Drone '{drone_id}' added.")
+        except sqlite3.IntegrityError:
             print(f"Drone '{drone_id}' already exists.")
-        except Exception as e:
-            print(f"An error occurred while writing to file '{drone_dir_name}/{drone_id}': {e}")
 
-        # self.drones.append(drone)
-
-    #place survivors inside simulation class
-    def place_survivors(self, count):
-        for _ in range(count):
-            x = random.randint(0, GRID_SIZE-1)
-            y = random.randint(0, GRID_SIZE-1)
-            self.survivors.append((x,y))
-            
-    
-    #drone movement function added
-    def move_drone(self, drone_id, x, y): # x and y (and z) simulate real life coordinates for drone movement determined by ai
-
+    def move_drone(self, drone_id, x, y):
         drone = self.drones.get(drone_id)
-        print(self.drones.get(drone_id))
         if drone is None:
             print(f"Drone '{drone_id}' not found. Cannot move.")
             return False
-        
         drone.move(x, y)
+        # update position in db
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "UPDATE drones SET x = ?, y = ? WHERE drone_id = ?",
+            (drone.get_x_pos(), drone.get_y_pos(), drone_id)
+        )
+        self.conn.commit()
         self.log_drone_state(drone_id)
         return True
-    
-    #thermal scan to simulate finding survivors
-    def thermal_scan(self, drone_id):
-
-        drone = self.drones.get(drone_id)
-        if drone is None:
-            print(f"Drone '{drone_id}' not found. Cannot perform thermal scan.")
-            return False
-        
-        pos = drone.get_position()
-        self.log_drone_state(drone_id)
-
-        if pos in self.survivors:
-            print(f"Survivor found at {pos}")
-            return True 
-        
-
-    #function to check drone battery
-    def get_battery_status(self, drone_id):
-
-        for drone in self.drones:
-            if drone.id == drone_id:
-                return drone.get_battery()
-        return None 
-
-    #return map state (ui)
-    def get_map_state(self):
-
-        drone_data = []
-
-        for d in self.drones:
-            drone_data.append({
-                "id": d.id,
-                "x": d.x,
-                "y": d.y,
-                "battery": d.battery
-            })
-
-        return {
-            "drones": drone_data,
-            "survivors": self.survivors
-        }
 
     def log_drone_state(self, drone_id):
-        for drone in self.drones.values():
-            if drone.id == drone_id:
-                with open(f"{drone_dir_name}/{drone_id}", "a") as f:
-                    f.write(f"{drone_id},{drone.get_state()},{temp_current_time},{drone.get_battery()},{drone.get_x_pos()},{drone.get_y_pos()}\n") 
-                with open(f"{region_dir_name}/{drone.region.id}", "a") as f:
-                    f.write(f"{drone_id},{drone.get_state()},{temp_current_time},{drone.get_battery()},{drone.get_x_pos()},{drone.get_y_pos()}\n")
+        drone = self.drones.get(drone_id)
+        if drone is None:
+            return
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "INSERT INTO drone_logs (drone_id, region_id, time, battery, x, y, state) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (drone_id, drone.region.id, temp_current_time, drone.get_battery(), drone.get_x_pos(), drone.get_y_pos(), drone.get_state())
+        )
+        self.conn.commit()
+
+    def thermal_scan(self, drone_id):
+        drone = self.drones.get(drone_id)
+        if drone is None:
+            print(f"Drone '{drone_id}' not found.")
+            return False
+        pos = drone.get_position()
+        self.log_drone_state(drone_id)
+        if pos in self.survivors:
+            print(f"Survivor found at {pos}")
+            self.log_drone_state(drone_id)
+            return True
+        return False
+
+    def get_battery_status(self, drone_id):
+        drone = self.drones.get(drone_id)
+        if drone:
+            return drone.get_battery()
+        return None
+
+    def place_survivors(self, count):
+        for _ in range(count):
+            x = random.randint(0, GRID_SIZE - 1)
+            y = random.randint(0, GRID_SIZE - 1)
+            self.survivors.append((x, y))
+
+    def close(self):
+        self.conn.close()
