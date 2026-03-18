@@ -26,7 +26,10 @@ from utils import (
 SYSTEM_PROMPT = (
     "You are an AI rescue model that aids in drone mission choices, resource management, and information retrieval of the environment for a detecting survivors in the designated disaster region. "
     "You have tools available to scan the area with drones, check drone locations and status"
-    "Always use the appropriate tool. For drone scans, collect all information you can from the scan results" 
+    "Always use the appropriate tool. For drone scans, collect all information you can from the scan results"
+    "You will be asked to make decisions about the ideal route of the drone when scanning, and how to best utilize the drone's battery life. You can also be asked to retrieve information about the environment or the drones themselves. Always use the tools at your disposal to make informed decisions and provide accurate information." 
+    "You will confirm with the user before making any decisions or taking any actions with the drones. Always provide reasoning for your decisions and actions, and ask for user confirmation before proceeding."
+    "Always give a step by step reasoning for your decisions and actions"
 )
 # TODO: add specific details to collect when scan (terrain type, buildings affected, survivor count...)
 
@@ -255,8 +258,7 @@ st.info(
     "`mcp_server.py` as a subprocess, discovers tools via the **Model Context "
     "Protocol**, and routes every tool call through the MCP session.\n\n"
     f"**Tools discovered from MCP server:** `{'`, `'.join(tool_names) if tool_names else 'none — check server'}`\n\n"
-    "Try: *'Book an innovation hub room for 6 people on 2026-04-10 at 10:00 for 2 hours, name: Bob'* "
-    "or *'What career events are coming up?'*",
+    "Try: *''*",
     icon="🔌",
 )
 
