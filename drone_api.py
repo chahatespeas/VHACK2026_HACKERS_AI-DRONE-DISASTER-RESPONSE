@@ -1,4 +1,7 @@
 # api.py
+
+import asyncio
+from agent import run_agent, _list_mcp_tools
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from simulation import Simulation
@@ -11,6 +14,9 @@ sim = Simulation()  # one shared simulation instance
 # ---------------------------------------------------------------------------
 # Request models
 # ---------------------------------------------------------------------------
+
+class ChatRequest(BaseModel):
+    message: str
 
 class AddRegionRequest(BaseModel):
     name: str
@@ -42,6 +48,13 @@ def health():
 
 # ── ai chat ─────────────────────────────────────────────────────────────────
 
+@app.post("/agent/chat")
+async def agent_chat(req: ChatRequest):
+    loop = asyncio.new_event_loop()
+    tools = loop.run_until_complete(_list_mcp_tools())
+    final_answer, tool_events = run_agent(req.message, tools)
+    loop.close()
+    return {"answer": final_answer, "tool_events": tool_events}
 
 # ── Regions ─────────────────────────────────────────────────────────────────
 
