@@ -260,7 +260,7 @@ st.info(
     "`mcp_server.py` as a subprocess, discovers tools via the **Model Context "
     "Protocol**, and routes every tool call through the MCP session.\n\n"
     f"**Tools discovered from MCP server:** `{'`, `'.join(tool_names) if tool_names else 'none — check server'}`\n\n"
-    "Try: *''*",
+    "Here you can add drones and regions, ask the agent how to make decisions on drone routes, the thermal scanning results, and the drone status. The agent will use the tools at its disposal to provide informed answers and reasoning. Try asking things like:\n\n",
     icon="🔌",
 )
 
