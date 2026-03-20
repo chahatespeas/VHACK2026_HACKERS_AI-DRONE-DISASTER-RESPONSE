@@ -1,4 +1,5 @@
-# ai-disaster-simulation
+# VHACK2026_HACKERS_AI-DRONE-DISASTER-RESPONSE
+Our AI Drone Disaster Response system is armed with the ability to document, detect and deploy drones to the optimal routes in scanning for survivors by using the Model Context Protocol. First responders are the backbone of rescuing victims of calamities — both the expected and unforeseen — but their capabilities are limited and time is essential. We aim aid to in this part of this process, by relieving the rescuers from identifying the victims. Knowing their locations beforehand would allow responders to manage their missions efficiently, ensuring all victims are found. 
 
 **1. Create and activate a virtual environment**
 
